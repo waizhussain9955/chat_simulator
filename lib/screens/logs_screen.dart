@@ -62,33 +62,55 @@ class _LogsScreenState extends State<LogsScreen> {
 
   // Logs Toolbar
   Widget _buildLogsToolbar(BuildContext context, AppProvider provider) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    final filterBar = SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildFilterButton('All', 'all'),
+          const SizedBox(width: 8),
+          _buildFilterButton('Success', 'success'),
+          const SizedBox(width: 8),
+          _buildFilterButton('Warnings', 'warning'),
+          const SizedBox(width: 8),
+          _buildFilterButton('Errors', 'error'),
+        ],
+      ),
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          filterBar,
+          if (provider.logs.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent, width: 0.5),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+              onPressed: () => provider.clearLogs(),
+              icon: const Icon(Icons.delete_outline, size: 16),
+              label: const Text('CLEAR CONSOLE', style: TextStyle(fontSize: 12)),
+            ),
+          ],
+        ],
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Filter tabs
-        Row(
-          children: [
-            _buildFilterButton('All', 'all'),
-            const SizedBox(width: 8),
-            _buildFilterButton('Success', 'success'),
-            const SizedBox(width: 8),
-            _buildFilterButton('Warnings', 'warning'),
-            const SizedBox(width: 8),
-            _buildFilterButton('Errors', 'error'),
-          ],
-        ),
-
-        // Action Buttons
-        Row(
-          children: [
-            if (provider.logs.isNotEmpty)
-              OutlinedButton.icon(
-                onPressed: () => provider.clearLogs(),
-                icon: const Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
-                label: const Text('CLEAR CONSOLE', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
-              ),
-          ],
-        )
+        filterBar,
+        if (provider.logs.isNotEmpty)
+          OutlinedButton.icon(
+            onPressed: () => provider.clearLogs(),
+            icon: const Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
+            label: const Text('CLEAR CONSOLE', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+          ),
       ],
     );
   }

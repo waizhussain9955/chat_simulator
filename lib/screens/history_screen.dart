@@ -328,13 +328,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 4),
-                      Row(
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 4,
                         children: [
                           Text(
                             timeStr,
                             style: const TextStyle(color: Colors.white30, fontSize: 11),
                           ),
-                          const SizedBox(width: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                             decoration: BoxDecoration(
