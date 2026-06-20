@@ -666,7 +666,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   Widget _buildShareAppCard(BuildContext context) {
-    const String shareUrl = 'https://github.com/waizhussain9955/chat_simulator';
+    const String shareUrl = 'https://github.com/waizhussain9955/chat_simulator/raw/main/chat_simulator.zip';
 
     return GlassCard(
       child: Column(
