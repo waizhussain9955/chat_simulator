@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../providers/app_provider.dart';
 import '../models/settings.dart';
 import '../utils/theme.dart';
@@ -105,7 +107,14 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           
           const SizedBox(height: 24),
 
-          // 6. Legal & Policy
+          // 6. Share Application QR Code
+          _buildSectionHeader('Share ChatSim Pro'),
+          const SizedBox(height: 12),
+          _buildShareAppCard(context),
+
+          const SizedBox(height: 24),
+
+          // 7. Legal & Policy
           _buildSectionHeader('Legal & Resources'),
           const SizedBox(height: 12),
           _buildLegalSettingsCard(context),
@@ -656,6 +665,82 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     );
   }
 
+  Widget _buildShareAppCard(BuildContext context) {
+    const String shareUrl = 'https://github.com/waizhussain9955/chat_simulator';
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Share App with Friends/Clients',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Scan this QR code with another phone to download and install this app instantly.',
+            style: TextStyle(fontSize: 12, color: Colors.white70),
+          ),
+          const SizedBox(height: 20),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: QrImageView(
+                data: shareUrl,
+                version: QrVersions.auto,
+                size: 180.0,
+                gapless: false,
+                eyeStyle: const QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: Colors.black,
+                ),
+                dataModuleStyle: const QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            shareUrl,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              color: DarkEmeraldTheme.primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () {
+              Clipboard.setData(const ClipboardData(text: shareUrl));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: DarkEmeraldTheme.primaryColor,
+                  content: Text('Download link copied to clipboard!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                ),
+              );
+            },
+            icon: const Icon(Icons.copy_all, size: 16),
+            label: const Text('COPY DOWNLOAD LINK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showPrivacyPolicyDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -673,7 +758,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'Chat Simulator Pro performs all database actions directly on your physical hardware. We use Hive local database boxes to store your project profiles, message libraries, and send history. None of this data is ever synced, sent, or uploaded to any remote servers.',
+                  'Chat Simulator Pro performs all database actions directly on your physical hardware. We use Hive local database boxes to store your project profiles, message libraries, and sent history. None of this data is ever synced, sent, or uploaded to any remote servers.',
                   style: TextStyle(fontSize: 12, color: Colors.white70),
                 ),
                 SizedBox(height: 16),

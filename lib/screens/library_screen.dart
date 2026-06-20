@@ -690,7 +690,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
             children: const [
               Icon(Icons.bolt, color: Colors.amber),
               SizedBox(width: 8),
-              Text('Flood Chat / Bomber Mode'),
+              Expanded(
+                child: Text('Flood Chat / Bomber Mode'),
+              ),
             ],
           ),
           content: SizedBox(
