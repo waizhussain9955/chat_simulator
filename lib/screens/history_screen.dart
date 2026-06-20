@@ -140,29 +140,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
               style: const TextStyle(fontSize: 12, color: Colors.white30),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                if (provider.history.isNotEmpty) ...[
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.redAccent,
-                        side: const BorderSide(color: Colors.redAccent, width: 0.5),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                      ),
-                      onPressed: () => _confirmClearHistory(context, provider),
-                      icon: const Icon(Icons.delete_sweep, size: 18),
-                      label: const Text('Clear All'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildExportButton(context, provider),
-                  ),
-                ],
-              ],
-            ),
+            if (provider.history.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  side: const BorderSide(color: Colors.redAccent, width: 0.5),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  minimumSize: const Size.fromHeight(40),
+                ),
+                onPressed: () => _confirmClearHistory(context, provider),
+                icon: const Icon(Icons.delete_sweep, size: 18),
+                label: const Text('Clear All'),
+              ),
+              const SizedBox(height: 12),
+              _buildExportButton(context, provider, isMobile: true),
+            ],
           ] else ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -221,8 +214,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   // Export Action Dropdown
-  Widget _buildExportButton(BuildContext context, AppProvider provider) {
+  Widget _buildExportButton(BuildContext context, AppProvider provider, {bool isMobile = false}) {
     return PopupMenuButton<String>(
+      constraints: isMobile ? const BoxConstraints(minWidth: 200) : null,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         alignment: Alignment.center,
@@ -232,7 +226,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
           children: const [
             Icon(Icons.download, color: Colors.black, size: 16),
             SizedBox(width: 8),

@@ -36,15 +36,28 @@ class ProjectsScreen extends StatelessWidget {
             LayoutBuilder(
               builder: (context, constraints) {
                 final isMobile = constraints.maxWidth < 650;
+
+                if (isMobile) {
+                  return Column(
+                    children: provider.projects.map((proj) {
+                      final isActive = provider.activeProject?.id == proj.id;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: _buildProjectCard(context, provider, proj, isActive),
+                      );
+                    }).toList(),
+                  );
+                }
+
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: provider.projects.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: isMobile ? 1 : 2,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
-                    childAspectRatio: isMobile ? 2.5 : 2.8,
+                    childAspectRatio: 2.8,
                   ),
                   itemBuilder: (context, index) {
                     final proj = provider.projects[index];
@@ -73,8 +86,8 @@ class ProjectsScreen extends StatelessWidget {
       borderColor: isActive ? DarkEmeraldTheme.primaryColor : const Color(0xff30363d),
       color: isActive ? const Color(0x3310b981) : DarkEmeraldTheme.cardColor,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -101,7 +114,8 @@ class ProjectsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isActive)
+              if (isActive) ...[
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
@@ -113,9 +127,10 @@ class ProjectsScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.bold),
                   ),
                 ),
+              ],
             ],
           ),
-          
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -135,6 +150,7 @@ class ProjectsScreen extends StatelessWidget {
                     ),
                 ],
               ),
+              const SizedBox(width: 8),
               if (!isActive)
                 ElevatedButton(
                   onPressed: () => provider.switchProject(project.id),
@@ -147,9 +163,13 @@ class ProjectsScreen extends StatelessWidget {
                   child: const Text('SWITCH TO'),
                 )
               else
-                const Text(
-                  'Currently Workspace Active',
-                  style: TextStyle(fontSize: 11, color: Colors.white30, fontStyle: FontStyle.italic),
+                const Expanded(
+                  child: Text(
+                    'Currently Workspace Active',
+                    style: TextStyle(fontSize: 11, color: Colors.white30, fontStyle: FontStyle.italic),
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 )
             ],
           )

@@ -50,6 +50,7 @@ class _NavigationShellState extends State<NavigationShell> {
     final isMobile = MediaQuery.of(context).size.width < 800;
 
     return Scaffold(
+      drawer: isMobile ? _buildMobileDrawer(context, provider) : null,
       body: Stack(
         children: [
           Row(
@@ -62,7 +63,9 @@ class _NavigationShellState extends State<NavigationShell> {
                 child: SafeArea(
                   child: Column(
                     children: [
-                      _buildTopHeader(context, provider),
+                      Builder(
+                        builder: (context) => _buildTopHeader(context, provider),
+                      ),
                       Expanded(
                         child: IndexedStack(
                           index: _currentIndex,
@@ -80,7 +83,6 @@ class _NavigationShellState extends State<NavigationShell> {
           if (provider.isRunning) _buildSimulationOverlay(context, provider),
         ],
       ),
-      bottomNavigationBar: isMobile ? _buildBottomNavigationBar(context, provider) : null,
     );
   }
 
@@ -218,10 +220,149 @@ class _NavigationShellState extends State<NavigationShell> {
     );
   }
 
+  Widget _buildMobileDrawer(BuildContext context, AppProvider provider) {
+    return Drawer(
+      backgroundColor: const Color(0xff161b22),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Row(
+                children: [
+                  const AppLogo(size: 32),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Chat Sim Pro',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          provider.activeProject?.name ?? 'No active project',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white54,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Color(0xff30363d), height: 1),
+            const SizedBox(height: 16),
+
+            // Nav Items
+            Expanded(
+              child: ListView.builder(
+                itemCount: _navItems.length,
+                itemBuilder: (context, index) {
+                  final item = _navItems[index];
+                  final isSelected = _currentIndex == index;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() => _currentIndex = index);
+                        Navigator.pop(context); // Close drawer
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? DarkEmeraldTheme.borderColor
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: isSelected
+                              ? Border.all(color: DarkEmeraldTheme.borderColor, width: 1)
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isSelected ? item['activeIcon'] : item['icon'],
+                              color: isSelected
+                                  ? DarkEmeraldTheme.primaryColor
+                                  : Colors.white60,
+                            ),
+                            const SizedBox(width: 16),
+                            Text(
+                              item['label'],
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.white60,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // Project Switcher Dropdown in Footer
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.swap_horiz, color: Colors.white54, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: provider.activeProject?.id,
+                          isExpanded: true,
+                          dropdownColor: const Color(0xff161b22),
+                          items: provider.projects.map((proj) {
+                            return DropdownMenuItem<String>(
+                              value: proj.id,
+                              child: Text(
+                                proj.name,
+                                style: const TextStyle(fontSize: 13, color: Colors.white),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              provider.switchProject(val);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Top header for pages (mostly title & quick info)
   Widget _buildTopHeader(BuildContext context, AppProvider provider) {
+    final isMobile = MediaQuery.of(context).size.width < 800;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: const BoxDecoration(
         color: Color(0xff0d1117),
         border: Border(bottom: BorderSide(color: Color(0xff1f242c), width: 1)),
@@ -229,32 +370,46 @@ class _NavigationShellState extends State<NavigationShell> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            _navItems[_currentIndex]['label'],
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          Row(
+            children: [
+              if (isMobile) ...[
+                IconButton(
+                  icon: const Icon(Icons.menu, color: Colors.white),
+                  onPressed: () {
+                    Scaffold.of(context).openDrawer();
+                  },
+                ),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                _navItems[_currentIndex]['label'],
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
           Row(
             children: [
               // Project Tag
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: DarkEmeraldTheme.borderColor,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: DarkEmeraldTheme.primaryColor.withOpacity(0.3)),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.circle, size: 8, color: DarkEmeraldTheme.primaryColor),
                     const SizedBox(width: 8),
                     Text(
                       provider.activeProject?.name ?? 'Default',
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: DarkEmeraldTheme.primaryColor,
                       ),
@@ -271,30 +426,6 @@ class _NavigationShellState extends State<NavigationShell> {
             ],
           )
         ],
-      ),
-    );
-  }
-
-  // Bottom Navigation Bar for Mobile
-  Widget _buildBottomNavigationBar(BuildContext context, AppProvider provider) {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xff30363d), width: 0.5)),
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        backgroundColor: const Color(0xff161b22),
-        selectedItemColor: DarkEmeraldTheme.primaryColor,
-        unselectedItemColor: Colors.white54,
-        type: BottomNavigationBarType.fixed,
-        items: _navItems.map((item) {
-          return BottomNavigationBarItem(
-            icon: Icon(item['icon']),
-            activeIcon: Icon(item['activeIcon']),
-            label: item['label'],
-          );
-        }).toList(),
       ),
     );
   }

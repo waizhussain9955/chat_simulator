@@ -352,8 +352,9 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
             children: [
               TextButton(
                 onPressed: () {

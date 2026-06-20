@@ -168,25 +168,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
   // Bulk execution controls
   Widget _buildBulkActionWidget(BuildContext context, AppProvider provider) {
     final isMobile = MediaQuery.of(context).size.width < 600;
-    
-    final content = [
-      Text(
-        '${_selectedMessageIds.length} Messages Selected',
-        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-      ),
-      if (isMobile) const SizedBox(height: 8),
-      Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: isMobile ? MainAxisAlignment.spaceBetween : MainAxisAlignment.start,
-        children: [
-          TextButton(
-            onPressed: () => setState(() => _selectedMessageIds.clear()),
-            child: const Text('Deselect All', style: TextStyle(color: Colors.white70)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: isMobile ? 1 : 0,
-            child: ElevatedButton.icon(
+
+    if (isMobile) {
+      return GlassCard(
+        padding: const EdgeInsets.all(16),
+        color: DarkEmeraldTheme.borderColor,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '${_selectedMessageIds.length} Messages Selected',
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
               onPressed: provider.isRunning
                   ? null
                   : () {
@@ -201,25 +197,186 @@ class _LibraryScreenState extends State<LibraryScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: DarkEmeraldTheme.primaryColor,
                 foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
-          ),
-        ],
-      ),
-    ];
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: () => setState(() => _selectedMessageIds.clear()),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white70,
+                side: const BorderSide(color: Colors.white30, width: 0.5),
+              ),
+              child: const Text('Deselect All'),
+            ),
+          ],
+        ),
+      );
+    }
 
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       color: DarkEmeraldTheme.borderColor,
-      child: isMobile
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: content,
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: content,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '${_selectedMessageIds.length} Messages Selected',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextButton(
+                onPressed: () => setState(() => _selectedMessageIds.clear()),
+                child: const Text('Deselect All', style: TextStyle(color: Colors.white70)),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: provider.isRunning
+                    ? null
+                    : () {
+                        final selectedMessages = provider.messages
+                            .where((m) => _selectedMessageIds.contains(m.id))
+                            .toList();
+                        provider.startSimulation(selectedMessages);
+                        setState(() => _selectedMessageIds.clear());
+                      },
+                icon: const Icon(Icons.play_circle_filled, size: 20),
+                label: const Text('SIMULATE SEQUENCE'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: DarkEmeraldTheme.primaryColor,
+                  foregroundColor: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageCard(
+    BuildContext context,
+    AppProvider provider,
+    Message msg,
+    bool isChecked,
+  ) {
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Checkbox(
+            value: isChecked,
+            activeColor: DarkEmeraldTheme.primaryColor,
+            onChanged: (val) {
+              setState(() {
+                if (val == true) {
+                  _selectedMessageIds.add(msg.id);
+                } else {
+                  _selectedMessageIds.remove(msg.id);
+                }
+              });
+            },
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  msg.message,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.white),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff0d1117),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    msg.category,
+                    style: const TextStyle(color: Colors.white54, fontSize: 9, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  msg.isFavorite ? Icons.star : Icons.star_border,
+                  color: msg.isFavorite ? Colors.amber : Colors.white30,
+                  size: 20,
+                ),
+                onPressed: () => provider.toggleFavoriteMessage(msg),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, color: Colors.white54, size: 20),
+                color: const Color(0xff161b22),
+                onSelected: (action) {
+                  if (action == 'edit') {
+                    _showEditMessageDialog(context, provider, msg);
+                  } else if (action == 'duplicate') {
+                    provider.duplicateMessage(msg);
+                  } else if (action == 'delete') {
+                    provider.deleteMessage(msg.id);
+                  } else if (action == 'flood') {
+                    _showFloodDialog(context, provider, msg);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, size: 16),
+                        SizedBox(width: 8),
+                        Text('Edit'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'duplicate',
+                    child: Row(
+                      children: [
+                        Icon(Icons.copy, size: 16),
+                        SizedBox(width: 8),
+                        Text('Duplicate'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'flood',
+                    child: Row(
+                      children: [
+                        Icon(Icons.bolt, size: 16, color: Colors.amberAccent),
+                        SizedBox(width: 8),
+                        Text('Flood Send...'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, size: 16, color: Colors.redAccent),
+                        SizedBox(width: 8),
+                        Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -231,134 +388,32 @@ class _LibraryScreenState extends State<LibraryScreen> {
   ) {
     final isMobile = MediaQuery.of(context).size.width < 700;
 
+    if (isMobile) {
+      return ListView.builder(
+        itemCount: list.length,
+        itemBuilder: (context, index) {
+          final msg = list[index];
+          final isChecked = _selectedMessageIds.contains(msg.id);
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: _buildMessageCard(context, provider, msg, isChecked),
+          );
+        },
+      );
+    }
+
     return GridView.builder(
       itemCount: list.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isMobile ? 1 : 2,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: isMobile ? 3.8 : 4.2,
+        childAspectRatio: 4.2,
       ),
       itemBuilder: (context, index) {
         final msg = list[index];
         final isChecked = _selectedMessageIds.contains(msg.id);
-
-        return GlassCard(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              Checkbox(
-                value: isChecked,
-                activeColor: DarkEmeraldTheme.primaryColor,
-                onChanged: (val) {
-                  setState(() {
-                    if (val == true) {
-                      _selectedMessageIds.add(msg.id);
-                    } else {
-                      _selectedMessageIds.remove(msg.id);
-                    }
-                  });
-                },
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      msg.message,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.white),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xff0d1117),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        msg.category,
-                        style: const TextStyle(color: Colors.white54, fontSize: 9, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      msg.isFavorite ? Icons.star : Icons.star_border,
-                      color: msg.isFavorite ? Colors.amber : Colors.white30,
-                      size: 20,
-                    ),
-                    onPressed: () => provider.toggleFavoriteMessage(msg),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: Colors.white54, size: 20),
-                    color: const Color(0xff161b22),
-                    onSelected: (action) {
-                      if (action == 'edit') {
-                        _showEditMessageDialog(context, provider, msg);
-                      } else if (action == 'duplicate') {
-                        provider.duplicateMessage(msg);
-                      } else if (action == 'delete') {
-                        provider.deleteMessage(msg.id);
-                      } else if (action == 'flood') {
-                        _showFloodDialog(context, provider, msg);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 16),
-                            SizedBox(width: 8),
-                            Text('Edit'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'duplicate',
-                        child: Row(
-                          children: [
-                            Icon(Icons.copy, size: 16),
-                            SizedBox(width: 8),
-                            Text('Duplicate'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'flood',
-                        child: Row(
-                          children: [
-                            Icon(Icons.bolt, size: 16, color: Colors.amberAccent),
-                            SizedBox(width: 8),
-                            Text('Flood Send...'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, size: 16, color: Colors.redAccent),
-                            SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.redAccent)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
+        return _buildMessageCard(context, provider, msg, isChecked);
       },
     );
   }
